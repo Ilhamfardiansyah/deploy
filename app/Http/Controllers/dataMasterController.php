@@ -169,41 +169,53 @@ class dataMasterController extends Controller
     public function editAdmin(User $admin)
     {
         $roles = Role::all();
-        return view('DataMaster.editAdmin', compact('admin', 'roles'));
+        $adminRole = $user->getRoleNames();
+        return view('DataMaster.editAdmin', compact('admin', 'adminRole', 'roles'));
     }
 
     public function updateAdmin(Request $request, $id)
     {
         $petugas = User::findOrFail($id);
 
-        $validateData = $request->validate([
-            'name'      => 'required',
-            'pangkat'   => 'required',
-            'nip'       => ['required', 'unique:users,nip,' . $petugas->id],
-            'role'      => 'required',
-            'email'     => 'required|email',
-            'jabatan'   => 'required',
+        // Validasi input
+        $request->validate([
+            'name'      => 'required|string|max:255',
+            'email'     => 'required|email|unique:users,email,' . $petugas->id,
+            'password'  => 'nullable|min:6',
+            'pangkat'   => 'required|string',
+            'nip'       => 'required|unique:users,nip,' . $petugas->id,
+            'role'      => 'required|string', // Perbaikan validasi
+            'jabatan'   => 'required|string',
         ]);
 
+        // Debugging sebelum update
+        // dd($request->all());
+
+        // Update data admin
         $petugas->name = $request->name;
+        $petugas->email = $request->email;
         $petugas->pangkat = $request->pangkat;
         $petugas->nip = $request->nip;
-        $petugas->role = $request->role;
-        $petugas->email = $request->email;
         $petugas->jabatan = $request->jabatan;
 
-        if ($request->filled('password')) {
-            $validateData['password'] = bcrypt($request->password);
+        // Hanya admin yang boleh mengubah role
+        if (auth()->user()->role === 'admin') {
+            $petugas->role = $request->role;
         }
 
-        // Update data
-        $petugas->save();
+        // Hanya update password jika diisi
+        if ($request->filled('password')) {
+            $petugas->password = bcrypt($request->password);
+        }
 
+        // Simpan hanya jika ada perubahan
+        if ($petugas->isDirty()) {
+            $petugas->save();
+            Alert::success('Success', 'Data Admin Berhasil Diedit');
+        } else {
+            Alert::info('Info', 'Tidak ada perubahan yang dilakukan.');
+        }
 
-
-        Alert::success('Success', 'Data Admin Berhasil Diedit');
         return back();
     }
-
-
 }

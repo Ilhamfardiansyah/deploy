@@ -65,14 +65,17 @@
                         </div>
                     </div>
 
+                    <pre>{{ $adminRole }}</pre>
                     <div class="row mb-3">
                         <label for="role" class="col-sm-3 col-form-label">Role</label>
                         <div class="col-sm-6">
                             <select name="role" id="role" class="form-control @error('role') is-invalid @enderror">
-                                <option value="" disabled>-- Pilih Role --</option>
+                                <option value="" disabled>~Pilih Role~</option>
                                 @foreach ($roles as $role)
-                                    <option value="{{ $role->id }}" @if ($role->id == $admin->role_id) selected @endif>
-                                        {{ $role->name }}</option>
+                                    <option value="{{ $role->id }}"
+                                        {{ $admin->role_id == $role->id ? 'selected' : '' }}>
+                                        {{ ucfirst($role->id) }}
+                                    </option>
                                 @endforeach
                             </select>
                             @error('role')
